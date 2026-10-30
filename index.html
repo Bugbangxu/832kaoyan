@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>832 上岸计划 · 每日打卡</title>
+<style>
+:root{
+  --bg:#ffffff;
+  --fg:#1b1b1b;
+  --fg2:#7a7a7a;
+  --line:#e6e6e6;
+  --line2:#cfcfcf;
+  --soft:#f5f5f5;
+  --acc:hsl(0 62% 44%);        /* 当日主题色，由 JS 注入 */
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'PingFang SC','HarmonyOS Sans SC','Microsoft YaHei','SimHei','Heiti SC','Noto Sans SC',sans-serif;
+  font-weight:700;
+  background:var(--bg);
+  color:var(--fg);
+  line-height:1.7;
+  font-size:15.5px;
+  padding-bottom:80px;
+}
+::selection{background:var(--acc);color:#fff}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  background:var(--bg);
+  border-bottom:2px solid var(--fg);
+}
+.topbar-in{
+  max-width:1180px;margin:0 auto;padding:13px 22px 11px;
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+}
+.brand{font-size:20px;letter-spacing:.04em;font-weight:900}
+.brand .seal{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;background:var(--acc);color:#fff;
+  font-size:14px;font-weight:900;margin-right:10px;letter-spacing:0;
+  vertical-align:-7px;transition:background .35s;
+}
+.top-meta{color:var(--fg2);font-size:12.5px;letter-spacing:.06em}
+.top-meta b{color:var(--acc);font-size:15px;font-weight:900;transition:color .35s}
+.top-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.btn{
+  font-family:inherit;font-weight:700;font-size:12.5px;letter-spacing:.08em;
+  padding:7px 15px;background:transparent;color:var(--fg);
+  border:1.5px solid var(--line2);cursor:pointer;
+  transition:border-color .25s,color .25s,background .25s;
+}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.solid{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.solid:hover{filter:brightness(.9);color:#fff}
+.btn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+/* ---------- layout ---------- */
+.layout{
+  max-width:1180px;margin:0 auto;padding:26px 22px 40px;
+  display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:38px;align-items:start;
+}
+@media(max-width:920px){.layout{grid-template-columns:1fr;gap:26px}}
+
+/* ---------- view tabs ---------- */
+.viewtabs{display:flex;gap:26px;border-bottom:2px solid var(--fg);margin-bottom:22px}
+.tab{
+  font-family:inherit;font-weight:900;background:none;border:none;cursor:pointer;
+  font-size:15px;letter-spacing:.12em;color:var(--fg2);
+  padding:8px 2px 10px;position:relative;
+}
+.tab:hover{color:var(--fg)}
+.tab.on{color:var(--acc);transition:color .35s}
+.tab.on::after{
+  content:'';position:absolute;left:0;right:0;bottom:-2px;height:3px;background:var(--acc);
+  transition:background .35s;
+}
+
+/* ---------- day header ---------- */
+.day-head{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:6px}
+.day-date{font-size:clamp(34px,5vw,52px);line-height:1.1;font-weight:900;letter-spacing:.02em}
+.day-date .yr{font-size:.38em;color:var(--fg2);letter-spacing:.12em;font-weight:700;margin-right:8px}
+.day-wd{font-size:16px;color:var(--fg2);letter-spacing:.2em;padding-bottom:8px}
+.chip{
+  display:inline-block;font-size:12px;letter-spacing:.14em;font-weight:900;
+  background:var(--acc);color:#fff;padding:3px 12px;margin-bottom:9px;
+  transition:background .35s;
+}
+.chip.ghost{background:transparent;color:var(--acc);border:1.5px solid var(--acc)}
+
+.datenav{display:flex;align-items:center;gap:8px;margin:14px 0 20px;flex-wrap:wrap}
+.nav-arrow{
+  font-family:inherit;font-weight:900;width:40px;height:36px;cursor:pointer;
+  background:transparent;border:1.5px solid var(--line2);color:var(--fg);font-size:16px;
+  transition:border-color .25s,color .25s;
+}
+.nav-arrow:hover{border-color:var(--acc);color:var(--acc)}
+.nav-label{font-size:12.5px;letter-spacing:.1em;color:var(--fg2);min-width:150px;text-align:center}
+
+.weekstrip{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 26px}
+.ws-day{
+  flex:1;min-width:74px;cursor:pointer;text-align:center;
+  border:1.5px solid var(--line);border-bottom-width:3px;
+  padding:7px 4px 9px;background:transparent;font-family:inherit;font-weight:700;
+  transition:border-color .25s,background .25s,color .25s;
+}
+.ws-day:hover{border-color:var(--acc)}
+.ws-day .wd{font-size:11px;letter-spacing:.16em;color:var(--fg2)}
+.ws-day .dn{font-size:17px;font-weight:900;margin:1px 0 4px;transition:color .35s}
+.ws-dot{width:8px;height:8px;background:var(--line2);display:inline-block;transition:background .3s}
+.ws-day.part .ws-dot{background:color-mix(in srgb, var(--acc) 55%, #fff)}
+.ws-day.full{background:var(--acc);border-color:var(--acc)}
+.ws-day.full .wd,.ws-day.full .dn{color:#fff}
+.ws-day.full .ws-dot{background:#fff}
+.ws-day.today{border-color:var(--acc)}
+.ws-day.today .dn{color:var(--acc)}
+.ws-day.full.today .dn{color:#fff}
+
+/* ---------- banners ---------- */
+.banner{
+  background:var(--soft);border-left:5px solid var(--acc);
+  padding:12px 16px 12px 18px;margin:0 0 26px;font-size:14px;
+  transition:border-color .35s;
+}
+.banner .lb{letter-spacing:.18em;color:var(--acc);font-size:11.5px;display:block;font-weight:900;transition:color .35s}
+
+/* ---------- task blocks ---------- */
+.block{margin:0 0 34px;opacity:0;transform:translateY(10px);animation:rise .5s cubic-bezier(.19,1,.22,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.block-head{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid var(--fg);padding-bottom:5px;margin-bottom:4px}
+.block-time{font-size:11.5px;letter-spacing:.18em;color:var(--fg2)}
+.block-sub{font-size:14px;letter-spacing:.22em;font-weight:900;color:var(--acc);transition:color .35s}
+.block-count{margin-left:auto;font-size:11.5px;letter-spacing:.1em;color:var(--fg2)}
+
+.task{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:12px 4px 11px;border-bottom:1px solid var(--line);
+  cursor:pointer;-webkit-user-select:none;user-select:none;
+}
+.task:hover .cbx{border-color:var(--acc)}
+.cbx{
+  flex:none;width:23px;height:23px;margin-top:3px;
+  border:2px solid var(--fg);background:transparent;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;padding:0;
+  transition:background .25s,border-color .25s,transform .18s;
+}
+.cbx svg{width:16px;height:16px;stroke:#fff;stroke-width:3;fill:none;
+  stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:22;stroke-dashoffset:22;transition:stroke-dashoffset .3s ease-out}
+.task.done .cbx{background:var(--acc);border-color:var(--acc)}
+.task.done .cbx svg{stroke-dashoffset:0}
+.task.done:active .cbx{transform:scale(.9)}
+.tt{position:relative;font-size:15px;padding-right:6px;transition:color .3s}
+.tt::after{
+  content:'';position:absolute;left:-2px;top:53%;width:calc(100% + 4px);height:2px;
+  background:var(--acc);transform:scaleX(0);transform-origin:left center;
+  transition:transform .32s cubic-bezier(.19,1,.22,1),background .35s;
+}
+.task.done .tt{color:var(--fg2)}
+.task.done .tt::after{transform:scaleX(1)}
+.day-note{
+  margin-top:28px;padding:12px 16px;background:var(--soft);
+  font-size:13px;color:var(--fg2);border-left:5px solid var(--line2);
+}
+.day-note .lb{letter-spacing:.18em;font-size:11px;color:var(--fg2);display:block}
+
+/* ---------- week view ---------- */
+.weekgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:20px}
+.wg-day{opacity:0;transform:translateY(10px);animation:rise .5s cubic-bezier(.19,1,.22,1) forwards}
+.wg-head{border-bottom:2px solid var(--acc);padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:9px}
+.wg-head .dn{font-weight:900;font-size:15px}
+.wg-head .dt{font-size:11.5px;color:var(--fg2);letter-spacing:.06em}
+.wg-task{display:flex;gap:9px;padding:8px 2px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;-webkit-user-select:none}
+.wg-task .cbx{width:18px;height:18px;margin-top:4px;border-width:1.5px}
+.wg-task .cbx svg{width:12px;height:12px}
+.wg-task .tt{font-size:13px;line-height:1.6}
+.wg-task .blk{font-size:9.5px;letter-spacing:.14em;color:var(--fg2);display:block}
+
+/* ---------- all-weeks view ---------- */
+.phase-head{
+  display:flex;align-items:baseline;gap:14px;margin:30px 0 10px;
+  border-bottom:2px solid var(--fg);padding-bottom:4px;
+}
+.phase-head:first-child{margin-top:4px}
+.phase-name{font-size:15px;font-weight:900;letter-spacing:.2em}
+.phase-range{font-size:11.5px;color:var(--fg2);letter-spacing:.08em}
+.phase-goal{font-size:12px;color:var(--fg2);margin:0 0 12px;letter-spacing:.02em;font-weight:600}
+.wk-row{
+  display:grid;grid-template-columns:56px 118px 1fr 58px;gap:14px;align-items:center;
+  padding:8px 6px;border-bottom:1px solid var(--line);cursor:pointer;
+  transition:background .25s;
+}
+.wk-row:hover{background:var(--soft)}
+.wk-no{font-weight:900;letter-spacing:.06em;transition:color .25s}
+.wk-row:hover .wk-no{color:var(--acc)}
+.wk-rg{font-size:12px;color:var(--fg2);letter-spacing:.04em}
+.wk-bar{height:10px;background:var(--soft);position:relative;overflow:hidden}
+.wk-bar i{position:absolute;inset:0;width:0;background:var(--acc);transition:width .5s cubic-bezier(.19,1,.22,1)}
+.wk-pct{font-size:12px;color:var(--fg2);text-align:right;letter-spacing:.04em}
+.wk-row.cur{background:var(--soft);border-left:5px solid var(--acc);padding-left:10px}
+.wk-row.cur .wk-no{color:var(--acc)}
+
+/* ---------- milestones ---------- */
+.ms-list{border-top:2px solid var(--fg)}
+.ms-row{
+  display:grid;grid-template-columns:110px 1fr 220px;gap:16px;
+  padding:13px 6px;border-bottom:1px solid var(--line);align-items:baseline;
+}
+.ms-when{font-size:12.5px;letter-spacing:.1em;color:var(--acc);font-weight:900}
+.ms-what{font-size:14px}
+.ms-goal{font-size:12.5px;color:var(--fg2)}
+@media(max-width:720px){.ms-row{grid-template-columns:1fr;gap:2px}}
+.w00-list .task{padding:10px 4px}
+
+/* ---------- sidebar ---------- */
+.side{position:sticky;top:86px;display:flex;flex-direction:column;gap:20px}
+@media(max-width:920px){.side{position:static}}
+.side-card{background:var(--bg);border:1.5px solid var(--line2);padding:18px}
+.ring-wrap{display:flex;align-items:center;gap:16px}
+.ring{width:92px;height:92px;flex:none}
+.ring circle{fill:none;stroke-width:8}
+.ring .bg{stroke:var(--soft)}
+.ring .fg{stroke:var(--acc);stroke-linecap:butt;transition:stroke-dashoffset .7s cubic-bezier(.19,1,.22,1),stroke .35s}
+.ring-num{font-size:22px;font-weight:900;letter-spacing:.01em}
+.ring-lb{font-size:11px;letter-spacing:.18em;color:var(--fg2)}
+.countdown{margin-top:14px;padding-top:12px;border-top:2px solid var(--fg);display:flex;align-items:baseline;gap:10px}
+.countdown .big{font-size:34px;font-weight:900;color:var(--acc);line-height:1;transition:color .35s}
+.countdown .lb{font-size:11px;letter-spacing:.2em;color:var(--fg2)}
+.side-title{font-size:11px;letter-spacing:.26em;color:var(--fg2);margin-bottom:10px;display:block;font-weight:900}
+.phase-now{font-size:17px;font-weight:900;letter-spacing:.16em;margin-bottom:4px;color:var(--acc);transition:color .35s}
+.phase-now-sub{font-size:12px;color:var(--fg2);margin-bottom:8px}
+.phase-now-goal{font-size:12.5px;line-height:1.75;font-weight:600}
+.data-btns{display:flex;flex-direction:column;gap:8px}
+.data-btns .btn{width:100%}
+.tiny{font-size:11px;color:var(--fg2);letter-spacing:.03em;line-height:1.75;font-weight:600}
+
+/* ---------- empty ---------- */
+.empty{padding:60px 10px;text-align:center;color:var(--fg2);font-weight:600}
+.empty .big{font-size:22px;color:var(--fg);letter-spacing:.18em;margin-bottom:10px;display:block;font-weight:900}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.001s!important;transition-duration:.001s!important}
+}
+</style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="832上岸计划">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand"><span class="seal">832</span>上岸计划 · 每日打卡</div>
+    <div class="top-meta">目标 <b>410</b> · 2026.11.02 → 2027.12.26 初试</div>
+    <div class="top-right">
+      <button class="btn" id="btnToday">回到今天</button>
+      <button class="btn solid" id="btnExport">导出进度</button>
+    </div>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="main-col">
+    <nav class="viewtabs" id="tabs">
+      <button class="tab on" data-view="today">今日</button>
+      <button class="tab" data-view="week">本周</button>
+      <button class="tab" data-view="all">全程</button>
+      <button class="tab" data-view="ms">里程碑</button>
+    </nav>
+    <div id="viewRoot"></div>
+  </section>
+
+  <aside class="side">
+    <div class="side-card">
+      <span class="side-title">总进度</span>
+      <div class="ring-wrap">
+        <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="bg" cx="50" cy="50" r="43"></circle>
+          <circle class="fg" id="ringFg" cx="50" cy="50" r="43"
+            stroke-dasharray="270.2" stroke-dashoffset="270.2"
+            transform="rotate(-90 50 50)"></circle>
+        </svg>
+        <div>
+          <div class="ring-num" id="ringNum">0%</div>
+          <div class="ring-lb" id="ringCnt">0 / 0 任务</div>
+        </div>
+      </div>
+      <div class="countdown">
+        <span class="big" id="cdNum">—</span>
+        <span class="lb">天后<br>上考场</span>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <span class="side-title">当前阶段</span>
+      <div class="phase-now" id="phaseName">—</div>
+      <div class="phase-now-sub" id="phaseRange"></div>
+      <div class="phase-now-goal" id="phaseGoal"></div>
+    </div>
+
+    <div class="side-card">
+      <span class="side-title">数据</span>
+      <div class="data-btns">
+        <button class="btn" id="btnImport">导入进度</button>
+        <button class="btn" id="btnReset">清空打卡记录</button>
+      </div>
+      <p class="tiny" style="margin-top:10px">打卡记录保存在本机浏览器。换设备或换浏览器前，先导出进度文件再导入。</p>
+      <input type="file" id="fileInput" accept="application/json" style="display:none">
+    </div>
+  </aside>
+</main>
+
+<script>
+/*APP-START*/
+const DATA = {"meta":{"title":"清华微电子 832 初试全程计划表","start":"2026-11-02","exam":"2027-12-26","target":410,"phases":[{"name":"基础期","from":1,"to":23,"range":"2026.11.2-2027.4.11","goal":"数学全科一轮（30讲+1000题基础篇）；832 完成数电、模电、拉扎维1-10章一轮并建笔记；英语单词2轮+长难句+阅读精翻入门"},{"name":"强化期","from":24,"to":36,"range":"2027.4.12-2027.7.11","goal":"数学强化（18/9讲+1000强化/880）；832 半物一轮+拉扎维二轮自推导+数集扫盲；英语阅读2013-2019+小三门入门"},{"name":"暑假黄金期","from":37,"to":44,"range":"2027.7.12-2027.9.5","goal":"数学真题分类+早年套卷；832 补充章节+习题强化；英语作文启动；政治徐涛强化+肖1000一刷"},{"name":"真题期","from":45,"to":52,"range":"2027.9.6-2027.10.31","goal":"数学近8年真题套卷卡时；832 回忆版专练+笔记背诵第一轮；英语作文每周2篇；政治二刷+时政；10月考研报名"},{"name":"冲刺期","from":53,"to":60,"range":"2027.11.1-2027.12.26","goal":"数学模拟卷（张宇8/4、合工大、李林）卡时+复盘；832 背诵三轮+框架默写；政治肖8/肖4；英语作文模板+模考"}],"w00":["买齐第二章资料（数学、832 五本教材优先，政治明年再说）","不背单词建好考研词书，从今天起每天打卡（已有基础不中断）","摸底：高数期末卷自测记录原始分数；832 四门各花1小时翻目录，标记完全忘掉的章","准备两个本子：数学错题本、832 笔记本（只记一面！背面留白）","打印本计划表 + 周复盘记录表；试听张宇基础30讲第0讲，熟悉节奏","11.1（周日）做第一次周复盘，按第五章流程走"],"milestones":[["2026.12 月底","基础期第 1 次月测（数学极限-导数单元 + 数电章节测）","数学 ≥80/150；数电 ≥70% 正确"],["2027.1 月底","月测（数学积分单元 + 模电章节测）","数学 ≥85/150"],["2027.3 月底","高数基础总测（自拟综合卷卡时）","≥95/150"],["2027.4 月中","阶段一收官总测（数学全科基础 + 832 三门小测）","数学 ≥105/150；832 各门 ≥70%"],["2027.6 月底","数学强化小结测 + 半物小测","数学 ≥115/150"],["2027.7 月初","强化收官自测（数学综合 + 832 全科）","数学 ≥115；832 ≥90/150"],["2027.9 月初","暑假收官模考（2016 数学真题卡时 + 832 全科自测）","数学 ≥120；832 ≥105"],["2027.10 月起","每周数学真题/模拟卡时 1 套（周安排已内置）","均分 ≥120，单套不低于 110"],["2027.11 月起","全科周模考：数学模拟 2 套 + 832 自测 1 次 + 英语作文 2 篇 + 政治肖 8","数学 ≥125；832 ≥115"],["2027.12 考前两周","英语 2026/2027 最新真题全真模考 + 政治肖 4 模考 + 832 框架默写","按考试时间演练 2 次以上"]]},"weeks":[{"num":1,"range":"11.2-11.8","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：极限：数列极限定义、性质（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：数电·阎石：逻辑代数与逻辑门（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句（拆分+翻译）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：极限运算法则入门 + 典型例题（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；语法专题 1 节"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；本周长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"机动补漏或预习下周年容"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结（生词本）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":2,"range":"11.9-11.15","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：无穷小比较、两个重要极限（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：数电：组合逻辑（编码器、译码器、加法器）（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句（拆分+翻译）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：洛必达与极限计算技巧综合（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：数电习题册对应章（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；语法专题 1 节"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；本周长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结（生词本）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":3,"range":"11.16-11.22","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：函数连续性与间断点分类（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：数电：组合逻辑（数据选择器、竞争冒险）（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句（拆分+翻译）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：闭区间连续函数性质（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：课后习题（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；语法专题 1 节"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"张宇基础 30 讲：【极限单元小测】+ 错题归因（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；本周长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结（生词本）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":4,"range":"11.23-11.29","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：导数定义与求导法则（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：数电：触发器（RS/JK/D/T）（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句（拆分+翻译）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：高阶导数、微分与近似计算（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；语法专题 1 节"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；本周长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"机动补漏或预习下周年容"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结（生词本）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":5,"range":"11.30-12.6","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：导数应用：单调性、极值与最值（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：数电：时序逻辑（计数器、寄存器）（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句（拆分+翻译）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：费马引理与罗尔定理（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：课后习题（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；语法专题 1 节"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；本周长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结（生词本）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":6,"range":"12.7-12.13","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：拉格朗日/柯西中值定理（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：数电：脉冲波形、AD/DA 转换（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句（拆分+翻译）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：泰勒公式及其应用（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：【数电小测】+ 错题整理（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；语法专题 1 节"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；本周长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结（生词本）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":7,"range":"12.14-12.20","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：不等式与零点问题综合（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：模电·高文焕：放大电路基础（静态工作点）（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句（拆分+翻译）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：不定积分：换元法与分部积分（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：小信号模型分析法（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；语法专题 1 节"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；本周长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结（生词本）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":8,"range":"12.21-12.27","note":"元旦 1.1-1.3：保底任务量（单词+错题本不中断）","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：有理函数/三角有理式积分（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：模电：BJT 放大（共射/共集/共基）（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句（拆分+翻译）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：定积分与变限积分函数（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：课后习题（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；语法专题 1 节"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；本周长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结（生词本）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":9,"range":"12.28-1.3","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：反常积分敛散性（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：模电：FET/MOS 放大电路（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句（拆分+翻译）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：定积分应用：面积、体积、弧长（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：课后习题（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；语法专题 1 节"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；本周长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结（生词本）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":10,"range":"1.4-1.10","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：多元函数极限与连续（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：模电：放大电路频率响应（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句（拆分+翻译）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：偏导数、全微分、复合与隐函数求导（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：习题 + 补漏（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；语法专题 1 节"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；本周长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结（生词本）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":11,"range":"1.11-1.17","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：多元极值与条件极值（拉格朗日乘数法）（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：模电：负反馈（类型判断、稳定性）（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句（拆分+翻译）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：方向导数与梯度（数一）（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：课后习题（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；语法专题 1 节"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；本周长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结（生词本）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":12,"range":"1.18-1.24","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：二重积分（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：模电：运算放大器应用电路（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句（拆分+翻译）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：三重积分及坐标变换（数一）（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：习题 + 补漏（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；语法专题 1 节"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；本周长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；长难句 2 句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结（生词本）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":13,"range":"1.25-1.31","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：曲线积分（数一）（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：模电：功率放大与振荡电路基础（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：曲面积分与高斯/斯托克斯公式（数一）（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：课后习题（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":14,"range":"2.1-2.7","note":"春节周（除夕-正月初三）：每天 4h 保底（单词+笔记回顾），节后即恢复全量","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：一阶微分方程与可降阶方程（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：模电综合回顾（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：高阶常系数线性微分方程（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：【模电小测】+ 课后题错题二刷（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":15,"range":"2.8-2.14","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：常数项级数敛散性判别（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：模集·拉扎维 ch1-2：绪论、MOS 器件物理（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或预习下周年容"},{"block":"pm","text":"机动补漏或预习下周年容"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":16,"range":"2.15-2.21","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：幂级数收敛域与展开（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：拉扎维 ch3：单级放大器（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：傅里叶级数（数一）（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：课后题精选（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":17,"range":"2.22-2.28","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：向量代数与空间解析几何（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：拉扎维 ch4：差动放大器（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：【高数基础总测】自拟综合卷/早年真题高数部分（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"机动补漏或预习下周年容"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":18,"range":"3.1-3.7","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：行列式（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：拉扎维 ch5：电流镜与有源负载（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：矩阵运算与初等变换（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：课后题精选（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":19,"range":"3.8-3.14","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：向量组与线性方程组（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：拉扎维 ch6：放大器频率响应（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或预习下周年容"},{"block":"pm","text":"机动补漏或预习下周年容"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":20,"range":"3.15-3.21","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：特征值与特征向量、相似对角化（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：拉扎维 ch7：噪声（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：二次型（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：拉扎维 ch8：反馈（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":21,"range":"3.22-3.28","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：随机事件与概率、条件概率（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：拉扎维 ch9：运算放大器（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：一维随机变量及常见分布（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：ch10：稳定性与频率补偿（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":22,"range":"3.29-4.4","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：多维随机变量及分布（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：拉扎维课后题精选（不全做，挑典型）（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：数字特征：期望、方差、协方差（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：对答案比较二级效应（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理（粗心错误必须记录！）+ 公式自己推一遍"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":23,"range":"4.5-4.11","note":"阶段一收官：基础总测 + 完成一轮笔记","days":{"周一":{"tasks":[{"block":"am","text":"张宇基础 30 讲：大数定律与中心极限定理（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：拉扎维 1-10 章自推导二轮（补书上省略的推导）（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"张宇基础 30 讲：数理统计：参数估计、假设检验（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"教材精读：【模集阶段测】+ 笔记整理（整理笔记，只记一面！）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"张宇基础 30 讲：【概率+线代基础总测】（看课/讲义 + 例题 + 笔记）"},{"block":"pm","text":"对应章节课后习题 + 对答案（计算题动手写完整过程）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"30 讲配套习题 + 1000 题基础篇对应节"},{"block":"pm","text":"习题续 + 错题整理"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"1000 题基础篇对应节 + 对答案，吃透卡壳题（多思考，不急看答案）"},{"block":"pm","text":"教材回看 + 重点电路/公式自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"习题续 + 薄弱点回看教材例题"},{"block":"pm","text":"本周笔记整理（背面留白：补推导/灵光一闪）+ 公式框架回顾"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":24,"range":"4.12-4.18","note":"","days":{"周一":{"tasks":[{"block":"am","text":"强化：强化·高数 18 讲：极限与连续专题"},{"block":"pm","text":"半物·刘恩科：晶体结构与能带论"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"强化：导数与微分综合"},{"block":"pm","text":"对应习题专练（课后题/习题册精选）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000 题强化篇 / 李林 880 对应章（限时训练）"},{"block":"pm","text":"习题续 + 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"习题续 + 对答案，典型题多种解法对比"},{"block":"pm","text":"错题重做 + 结论自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题二刷 + 薄弱专题专攻"},{"block":"pm","text":"笔记整理 + 公式框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理 + 本周推导/结论自默写"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":25,"range":"4.19-4.25","note":"","days":{"周一":{"tasks":[{"block":"am","text":"强化：中值定理与泰勒公式专题"},{"block":"pm","text":"半物：杂质能级、载流子统计分布"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"强化：不等式/零点证明专练"},{"block":"pm","text":"对应习题专练（课后题/习题册精选）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000 题强化篇 / 李林 880 对应章（限时训练）"},{"block":"pm","text":"习题续 + 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"习题续 + 对答案，典型题多种解法对比"},{"block":"pm","text":"错题重做 + 结论自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题二刷 + 薄弱专题专攻"},{"block":"pm","text":"笔记整理 + 公式框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理 + 本周推导/结论自默写"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":26,"range":"4.26-5.2","note":"","days":{"周一":{"tasks":[{"block":"am","text":"强化：积分专题：不定积分技巧、定积分与变限"},{"block":"pm","text":"半物：载流子输运（漂移/扩散、迁移率）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"1000 题强化篇 / 李林 880 对应章（限时训练）"},{"block":"pm","text":"对应习题专练（课后题/习题册精选）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"习题续 + 对答案，典型题多种解法对比"},{"block":"pm","text":"习题续 + 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"错题二刷 + 薄弱专题专攻"},{"block":"pm","text":"错题重做 + 结论自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周推导/结论自默写"},{"block":"pm","text":"笔记整理 + 公式框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或预习"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":27,"range":"5.3-5.9","note":"","days":{"周一":{"tasks":[{"block":"am","text":"强化：积分应用与反常积分专题"},{"block":"pm","text":"半物：非平衡载流子与复合"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"1000 题强化篇 / 李林 880 对应章（限时训练）"},{"block":"pm","text":"课后题"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"习题续 + 对答案，典型题多种解法对比"},{"block":"pm","text":"对应习题专练（课后题/习题册精选）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"错题二刷 + 薄弱专题专攻"},{"block":"pm","text":"习题续 + 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周推导/结论自默写"},{"block":"pm","text":"错题重做 + 结论自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或预习"},{"block":"pm","text":"笔记整理 + 公式框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":28,"range":"5.10-5.16","note":"","days":{"周一":{"tasks":[{"block":"am","text":"强化：多元微分专题"},{"block":"pm","text":"半物：pn 结（能带、电容、击穿）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"1000 题强化篇 / 李林 880 对应章（限时训练）"},{"block":"pm","text":"对应习题专练（课后题/习题册精选）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"习题续 + 对答案，典型题多种解法对比"},{"block":"pm","text":"习题续 + 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"错题二刷 + 薄弱专题专攻"},{"block":"pm","text":"错题重做 + 结论自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周推导/结论自默写"},{"block":"pm","text":"笔记整理 + 公式框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或预习"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":29,"range":"5.17-5.23","note":"","days":{"周一":{"tasks":[{"block":"am","text":"强化：重积分与线面积分专题（数一）"},{"block":"pm","text":"半物：BJT"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"1000 题强化篇 / 李林 880 对应章（限时训练）"},{"block":"pm","text":"尼曼 BJT 章补充"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"习题续 + 对答案，典型题多种解法对比"},{"block":"pm","text":"对应习题专练（课后题/习题册精选）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"错题二刷 + 薄弱专题专攻"},{"block":"pm","text":"习题续 + 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周推导/结论自默写"},{"block":"pm","text":"错题重做 + 结论自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或预习"},{"block":"pm","text":"笔记整理 + 公式框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":30,"range":"5.24-5.30","note":"","days":{"周一":{"tasks":[{"block":"am","text":"强化：微分方程与级数专题"},{"block":"pm","text":"半物：MOS 结构与 MOSFET"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"强化：【高数强化小结测】"},{"block":"pm","text":"尼曼 MOS 章补充"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000 题强化篇 / 李林 880 对应章（限时训练）"},{"block":"pm","text":"【半物小测】"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"习题续 + 对答案，典型题多种解法对比"},{"block":"pm","text":"对应习题专练（课后题/习题册精选）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题二刷 + 薄弱专题专攻"},{"block":"pm","text":"习题续 + 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读二刷 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理 + 本周推导/结论自默写"},{"block":"pm","text":"错题重做 + 结论自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":31,"range":"5.31-6.6","note":"","days":{"周一":{"tasks":[{"block":"am","text":"强化：线代 9 讲：行列式、矩阵、向量组专题"},{"block":"pm","text":"数电错题二刷 + 数集知识扫盲（李翔羽《数字超大规模集成电路设计》网课选看，整理提纲即可）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"1000 题强化篇 / 李林 880 对应章（限时训练）"},{"block":"pm","text":"对应习题专练（课后题/习题册精选）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"习题续 + 对答案，典型题多种解法对比"},{"block":"pm","text":"习题续 + 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"错题二刷 + 薄弱专题专攻"},{"block":"pm","text":"错题重做 + 结论自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周推导/结论自默写"},{"block":"pm","text":"笔记整理 + 公式框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；新题型/翻译练习 1 组"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或预习"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":32,"range":"6.7-6.13","note":"6 月期末考试期：考研每天保底 6h，期末求过不求高","days":{"周一":{"tasks":[{"block":"am","text":"强化：线代：方程组、特征值、二次型专题（本月期末考，保底 3h/天）"},{"block":"pm","text":"模电薄弱章节重做 + 课后题二刷（期末月，保底 3h/天）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"1000 题强化篇 / 李林 880 对应章（限时训练）"},{"block":"pm","text":"对应习题专练（课后题/习题册精选）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"习题续 + 对答案，典型题多种解法对比"},{"block":"pm","text":"习题续 + 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"错题二刷 + 薄弱专题专攻"},{"block":"pm","text":"错题重做 + 结论自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周推导/结论自默写"},{"block":"pm","text":"笔记整理 + 公式框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；新题型/翻译练习 1 组"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或预习"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":33,"range":"6.14-6.20","note":"6 月期末考试期：考研每天保底 6h","days":{"周一":{"tasks":[{"block":"am","text":"强化：概率 9 讲：随机变量与分布专题"},{"block":"pm","text":"拉扎维 ch2-5 二轮：自己补推导小信号模型"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"1000 题强化篇 / 李林 880 对应章（限时训练）"},{"block":"pm","text":"对应习题专练（课后题/习题册精选）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"习题续 + 对答案，典型题多种解法对比"},{"block":"pm","text":"习题续 + 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"错题二刷 + 薄弱专题专攻"},{"block":"pm","text":"错题重做 + 结论自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周推导/结论自默写"},{"block":"pm","text":"笔记整理 + 公式框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；新题型/翻译练习 1 组"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或预习"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":34,"range":"6.21-6.27","note":"","days":{"周一":{"tasks":[{"block":"am","text":"强化：概率：数字特征、大数定律、统计专题"},{"block":"pm","text":"拉扎维 ch6-8 二轮：频率响应、噪声、反馈推导"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"1000 题强化篇 / 李林 880 对应章（限时训练）"},{"block":"pm","text":"对应习题专练（课后题/习题册精选）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"习题续 + 对答案，典型题多种解法对比"},{"block":"pm","text":"习题续 + 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"错题二刷 + 薄弱专题专攻"},{"block":"pm","text":"错题重做 + 结论自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周推导/结论自默写"},{"block":"pm","text":"笔记整理 + 公式框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；新题型/翻译练习 1 组"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或预习"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":35,"range":"6.28-7.4","note":"","days":{"周一":{"tasks":[{"block":"am","text":"强化：1000 题强化篇 / 李林 880 高数强化错题二刷"},{"block":"pm","text":"拉扎维 ch9-10 二轮 + 半物公式框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"强化：薄弱专题专攻"},{"block":"pm","text":"对应习题专练（课后题/习题册精选）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000 题强化篇 / 李林 880 对应章（限时训练）"},{"block":"pm","text":"习题续 + 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"习题续 + 对答案，典型题多种解法对比"},{"block":"pm","text":"错题重做 + 结论自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题二刷 + 薄弱专题专攻"},{"block":"pm","text":"笔记整理 + 公式框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；新题型/翻译练习 1 组"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理 + 本周推导/结论自默写"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":36,"range":"7.5-7.11","note":"强化收官自测 + 暑假计划最终确认","days":{"周一":{"tasks":[{"block":"am","text":"强化：【强化收官自测】综合卷卡时"},{"block":"pm","text":"832 全科笔记完善"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇（真题）"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周二":{"tasks":[{"block":"am","text":"强化：全科错题本一轮总结"},{"block":"pm","text":"【强化收官自测】"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇 + 摘句"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000 题强化篇 / 李林 880 对应章（限时训练）"},{"block":"pm","text":"对应习题专练（课后题/习题册精选）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；生词/长难句回看"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周四":{"tasks":[{"block":"am","text":"习题续 + 对答案，典型题多种解法对比"},{"block":"pm","text":"习题续 + 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读精翻 1 篇"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题二刷 + 薄弱专题专攻"},{"block":"pm","text":"错题重做 + 结论自己推一遍"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；新题型/翻译练习 1 组"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周六":{"tasks":[{"block":"am","text":"错题本整理 + 本周推导/结论自默写"},{"block":"pm","text":"笔记整理 + 公式框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治未启动，该时段机动给薄弱科"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":37,"range":"7.12-7.18","note":"","days":{"周一":{"tasks":[{"block":"am","text":"真题分类专练（2000-2008）：极限、导数、积分"},{"block":"pm","text":"拉扎维补充：带隙基准"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周二":{"tasks":[{"block":"am","text":"套卷/专练复盘：错题归因（知识盲区 or 粗心 or 时间分配）"},{"block":"pm","text":"习题专练（限时）+ 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 薄弱专题回讲义"},{"block":"pm","text":"习题续 + 错题重做"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算能力专练"},{"block":"pm","text":"薄弱章节回教材 + 推导补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周小结"},{"block":"pm","text":"笔记整理 + 知识框架图补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏（欠账清零）"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":38,"range":"7.19-7.25","note":"","days":{"周一":{"tasks":[{"block":"am","text":"真题分类专练：多元、级数、微分方程"},{"block":"pm","text":"拉扎维补充：开关电容电路"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周二":{"tasks":[{"block":"am","text":"套卷/专练复盘：错题归因（知识盲区 or 粗心 or 时间分配）"},{"block":"pm","text":"习题专练（限时）+ 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 薄弱专题回讲义"},{"block":"pm","text":"习题续 + 错题重做"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算能力专练"},{"block":"pm","text":"薄弱章节回教材 + 推导补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周小结"},{"block":"pm","text":"笔记整理 + 知识框架图补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏（欠账清零）"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":39,"range":"7.26-8.1","note":"","days":{"周一":{"tasks":[{"block":"am","text":"真题分类专练：线代专题"},{"block":"pm","text":"拉扎维补充：振荡器"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周二":{"tasks":[{"block":"am","text":"套卷/专练复盘：错题归因（知识盲区 or 粗心 or 时间分配）"},{"block":"pm","text":"习题专练（限时）+ 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 薄弱专题回讲义"},{"block":"pm","text":"习题续 + 错题重做"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算能力专练"},{"block":"pm","text":"薄弱章节回教材 + 推导补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周小结"},{"block":"pm","text":"笔记整理 + 知识框架图补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏（欠账清零）"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：徐涛强化班（马原）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":40,"range":"8.2-8.8","note":"","days":{"周一":{"tasks":[{"block":"am","text":"真题分类专练：概率专题 + 1000/880 错题三刷"},{"block":"pm","text":"拉扎维补充：纳米尺度设计、非线性与不匹配"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：徐涛强化班（史纲）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周二":{"tasks":[{"block":"am","text":"套卷/专练复盘：错题归因（知识盲区 or 粗心 or 时间分配）"},{"block":"pm","text":"习题专练（限时）+ 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：徐涛强化班（史纲）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 薄弱专题回讲义"},{"block":"pm","text":"习题续 + 错题重做"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：徐涛强化班（史纲）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算能力专练"},{"block":"pm","text":"薄弱章节回教材 + 推导补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：徐涛强化班（史纲）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周小结"},{"block":"pm","text":"笔记整理 + 知识框架图补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：徐涛强化班（史纲）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏（欠账清零）"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：徐涛强化班（史纲）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":41,"range":"8.9-8.15","note":"","days":{"周一":{"tasks":[{"block":"am","text":"早年真题套卷 2005-2008（卡时 3h/套）"},{"block":"pm","text":"习题强化专练：模电 + 模集（课后题/习题册）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：徐涛强化班（史纲）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周二":{"tasks":[{"block":"am","text":"套卷/专练复盘：错题归因（知识盲区 or 粗心 or 时间分配）"},{"block":"pm","text":"习题专练（限时）+ 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：徐涛强化班（史纲）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 薄弱专题回讲义"},{"block":"pm","text":"习题续 + 错题重做"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：徐涛强化班（史纲）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算能力专练"},{"block":"pm","text":"薄弱章节回教材 + 推导补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：徐涛强化班（史纲）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周小结"},{"block":"pm","text":"笔记整理 + 知识框架图补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：徐涛强化班（史纲）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏（欠账清零）"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：徐涛强化班（史纲）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":42,"range":"8.16-8.22","note":"","days":{"周一":{"tasks":[{"block":"am","text":"真题套卷 2009-2012（卡时）"},{"block":"pm","text":"习题强化专练：半物 + 数电 + 公式框架笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：徐涛强化班（毛中特）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周二":{"tasks":[{"block":"am","text":"套卷/专练复盘：错题归因（知识盲区 or 粗心 or 时间分配）"},{"block":"pm","text":"习题专练（限时）+ 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：徐涛强化班（毛中特）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 薄弱专题回讲义"},{"block":"pm","text":"习题续 + 错题重做"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：徐涛强化班（毛中特）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算能力专练"},{"block":"pm","text":"薄弱章节回教材 + 推导补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：徐涛强化班（毛中特）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周小结"},{"block":"pm","text":"笔记整理 + 知识框架图补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：徐涛强化班（毛中特）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏（欠账清零）"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：徐涛强化班（毛中特）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":43,"range":"8.23-8.29","note":"","days":{"周一":{"tasks":[{"block":"am","text":"真题套卷 2013-2015（卡时）+ 错题重做"},{"block":"pm","text":"薄弱专题专攻（按错题本排序）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：徐涛强化班（毛中特）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周二":{"tasks":[{"block":"am","text":"套卷/专练复盘：错题归因（知识盲区 or 粗心 or 时间分配）"},{"block":"pm","text":"习题专练（限时）+ 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：徐涛强化班（毛中特）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 薄弱专题回讲义"},{"block":"pm","text":"习题续 + 错题重做"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：徐涛强化班（毛中特）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算能力专练"},{"block":"pm","text":"薄弱章节回教材 + 推导补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：徐涛强化班（毛中特）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周小结"},{"block":"pm","text":"笔记整理 + 知识框架图补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：徐涛强化班（毛中特）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏（欠账清零）"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：徐涛强化班（毛中特）+ 核心考案笔记 + 肖 1000 对应节"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":44,"range":"8.30-9.5","note":"暑假收官：全科自测 + 9-12 月计划校准（对照 410 目标）","days":{"周一":{"tasks":[{"block":"am","text":"【暑假收官模考】2016 真题卡时 + 弱点清单"},{"block":"pm","text":"【暑假收官自测】+ 数集知识查漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：徐涛强化班（思修）收尾 + 肖 1000 一刷完成"}],"note":""},"周二":{"tasks":[{"block":"am","text":"套卷/专练复盘：错题归因（知识盲区 or 粗心 or 时间分配）"},{"block":"pm","text":"习题专练（限时）+ 对答案"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：徐涛强化班（思修）收尾 + 肖 1000 一刷完成"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 薄弱专题回讲义"},{"block":"pm","text":"习题续 + 错题重做"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：徐涛强化班（思修）收尾 + 肖 1000 一刷完成"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算能力专练"},{"block":"pm","text":"薄弱章节回教材 + 推导补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：徐涛强化班（思修）收尾 + 肖 1000 一刷完成"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 本周小结"},{"block":"pm","text":"笔记整理 + 知识框架图补全"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：徐涛强化班（思修）收尾 + 肖 1000 一刷完成"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏（欠账清零）"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：徐涛强化班（思修）收尾 + 肖 1000 一刷完成"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":45,"range":"9.6-9.12","note":"","days":{"周一":{"tasks":[{"block":"am","text":"2017 真题卡时 + 错题深挖归因"},{"block":"pm","text":"832 真题/回忆版搜集（QQ 群 759104517）+ 考点分布分析"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周二":{"tasks":[{"block":"am","text":"真题复盘日：错题深挖 + 对应专题回讲义"},{"block":"pm","text":"专练复盘 + 考点回到笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000/880 错题四刷 + 专题补漏"},{"block":"pm","text":"笔记/框架背诵（当天任务滚动复习）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算/手感训练"},{"block":"pm","text":"错题重做 + 回归教材"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 命题规律小结"},{"block":"pm","text":"错题回看 + 框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":46,"range":"9.13-9.19","note":"","days":{"周一":{"tasks":[{"block":"am","text":"2018 真题卡时 + 错题深挖"},{"block":"pm","text":"回忆版专练①：模电 + 模集部分"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周二":{"tasks":[{"block":"am","text":"真题复盘日：错题深挖 + 对应专题回讲义"},{"block":"pm","text":"专练复盘 + 考点回到笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000/880 错题四刷 + 专题补漏"},{"block":"pm","text":"笔记/框架背诵（当天任务滚动复习）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算/手感训练"},{"block":"pm","text":"错题重做 + 回归教材"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 命题规律小结"},{"block":"pm","text":"错题回看 + 框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":47,"range":"9.20-9.26","note":"","days":{"周一":{"tasks":[{"block":"am","text":"2019 真题卡时 + 专题补漏"},{"block":"pm","text":"回忆版专练②：半导体物理部分"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周二":{"tasks":[{"block":"am","text":"真题复盘日：错题深挖 + 对应专题回讲义"},{"block":"pm","text":"专练复盘 + 考点回到笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000/880 错题四刷 + 专题补漏"},{"block":"pm","text":"笔记/框架背诵（当天任务滚动复习）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算/手感训练"},{"block":"pm","text":"错题重做 + 回归教材"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 命题规律小结"},{"block":"pm","text":"错题回看 + 框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":48,"range":"9.27-10.3","note":"","days":{"周一":{"tasks":[{"block":"am","text":"2020 真题卡时 + 专题补漏"},{"block":"pm","text":"回忆版专练③：数电 + 综合题"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周二":{"tasks":[{"block":"am","text":"真题复盘日：错题深挖 + 对应专题回讲义"},{"block":"pm","text":"专练复盘 + 考点回到笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000/880 错题四刷 + 专题补漏"},{"block":"pm","text":"笔记/框架背诵（当天任务滚动复习）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算/手感训练"},{"block":"pm","text":"错题重做 + 回归教材"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 命题规律小结"},{"block":"pm","text":"错题回看 + 框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":49,"range":"10.4-10.10","note":"","days":{"周一":{"tasks":[{"block":"am","text":"2021 真题卡时 + 1000/880 错题四刷"},{"block":"pm","text":"笔记背诵第一轮：数电 + 模电（按框架背）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周二":{"tasks":[{"block":"am","text":"真题复盘日：错题深挖 + 对应专题回讲义"},{"block":"pm","text":"专练复盘 + 考点回到笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000/880 错题四刷 + 专题补漏"},{"block":"pm","text":"笔记/框架背诵（当天任务滚动复习）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算/手感训练"},{"block":"pm","text":"错题重做 + 回归教材"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 命题规律小结"},{"block":"pm","text":"错题回看 + 框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":50,"range":"10.11-10.17","note":"","days":{"周一":{"tasks":[{"block":"am","text":"2022 真题卡时 + 薄弱专题"},{"block":"pm","text":"笔记背诵第一轮：模集 + 半物"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周二":{"tasks":[{"block":"am","text":"真题复盘日：错题深挖 + 对应专题回讲义"},{"block":"pm","text":"专练复盘 + 考点回到笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000/880 错题四刷 + 专题补漏"},{"block":"pm","text":"笔记/框架背诵（当天任务滚动复习）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算/手感训练"},{"block":"pm","text":"错题重做 + 回归教材"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 命题规律小结"},{"block":"pm","text":"错题回看 + 框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":51,"range":"10.18-10.24","note":"","days":{"周一":{"tasks":[{"block":"am","text":"2023 真题卡时 + 错题二刷"},{"block":"pm","text":"公式框架默写 + 薄弱专题回归教材"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周二":{"tasks":[{"block":"am","text":"真题复盘日：错题深挖 + 对应专题回讲义"},{"block":"pm","text":"专练复盘 + 考点回到笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000/880 错题四刷 + 专题补漏"},{"block":"pm","text":"笔记/框架背诵（当天任务滚动复习）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算/手感训练"},{"block":"pm","text":"错题重做 + 回归教材"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 命题规律小结"},{"block":"pm","text":"错题回看 + 框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":52,"range":"10.25-10.31","note":"考研报名/确认关注研招网通知（10 月网报、11 月确认）","days":{"周一":{"tasks":[{"block":"am","text":"2024 真题卡时 + 真题错题总复盘"},{"block":"pm","text":"全科知识树自测 + 错题三刷"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（写完 AI 润色 + 仿写好句）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周二":{"tasks":[{"block":"am","text":"真题复盘日：错题深挖 + 对应专题回讲义"},{"block":"pm","text":"专练复盘 + 考点回到笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇 + 小三门 1 组"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周三":{"tasks":[{"block":"am","text":"1000/880 错题四刷 + 专题补漏"},{"block":"pm","text":"笔记/框架背诵（当天任务滚动复习）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文素材/句型积累"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周四":{"tasks":[{"block":"am","text":"专题补漏 + 计算/手感训练"},{"block":"pm","text":"错题重做 + 回归教材"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门 1 组（新题型/翻译）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本整理 + 命题规律小结"},{"block":"pm","text":"错题回看 + 框架默写"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇（限时 + AI 润色）"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 1000 二刷（只做错题）+ 时政启动（跟冲刺手册）"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":53,"range":"11.1-11.7","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇 8 套卷①②（卡时）+ 复盘"},{"block":"pm","text":"笔记背诵第二轮：全科按框架背"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文背诵/仿写"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周二":{"tasks":[{"block":"am","text":"模拟卷复盘 + 错题归因"},{"block":"pm","text":"限时自测复盘 + 薄弱处回笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇保持手感"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 回归讲义对应专题"},{"block":"pm","text":"笔记滚动背诵（第 3 轮）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文模板打磨"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周四":{"tasks":[{"block":"am","text":"公式/结论默写 + 薄弱点回笔记"},{"block":"pm","text":"框架默写 + 错题回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门保持练习"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本回看 + 考前策略整理"},{"block":"pm","text":"教材重点章快速回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇限时"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或轻量保持训练"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":54,"range":"11.8-11.14","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇 8 套卷③④ + 错题归因"},{"block":"pm","text":"模集重点推导默写（小信号、反馈、运放）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文背诵/仿写"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周二":{"tasks":[{"block":"am","text":"模拟卷复盘 + 错题归因"},{"block":"pm","text":"限时自测复盘 + 薄弱处回笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇保持手感"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 回归讲义对应专题"},{"block":"pm","text":"笔记滚动背诵（第 3 轮）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文模板打磨"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周四":{"tasks":[{"block":"am","text":"公式/结论默写 + 薄弱点回笔记"},{"block":"pm","text":"框架默写 + 错题回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门保持练习"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本回看 + 考前策略整理"},{"block":"pm","text":"教材重点章快速回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇限时"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或轻量保持训练"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":55,"range":"11.15-11.21","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇 8 套卷⑤⑥ + 薄弱点回补"},{"block":"pm","text":"半物公式与机理背默 + 综合自测"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文背诵/仿写"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周二":{"tasks":[{"block":"am","text":"模拟卷复盘 + 错题归因"},{"block":"pm","text":"限时自测复盘 + 薄弱处回笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇保持手感"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 回归讲义对应专题"},{"block":"pm","text":"笔记滚动背诵（第 3 轮）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文模板打磨"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周四":{"tasks":[{"block":"am","text":"公式/结论默写 + 薄弱点回笔记"},{"block":"pm","text":"框架默写 + 错题回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门保持练习"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本回看 + 考前策略整理"},{"block":"pm","text":"教材重点章快速回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇限时"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或轻量保持训练"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":56,"range":"11.22-11.28","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇 8 套卷⑦⑧ + 8 套卷错题总结"},{"block":"pm","text":"数电 + 模电查漏 + 回忆版重做"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文背诵/仿写"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周二":{"tasks":[{"block":"am","text":"模拟卷复盘 + 错题归因"},{"block":"pm","text":"限时自测复盘 + 薄弱处回笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇保持手感"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 回归讲义对应专题"},{"block":"pm","text":"笔记滚动背诵（第 3 轮）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文模板打磨"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周四":{"tasks":[{"block":"am","text":"公式/结论默写 + 薄弱点回笔记"},{"block":"pm","text":"框架默写 + 错题回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门保持练习"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本回看 + 考前策略整理"},{"block":"pm","text":"教材重点章快速回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇限时"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或轻量保持训练"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 8 选择题（卡时刷 + 错题）+ 背诵手册每天翻 20 分钟"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":57,"range":"11.29-12.5","note":"","days":{"周一":{"tasks":[{"block":"am","text":"合工大超越 10 套（选 5 套卡时）"},{"block":"pm","text":"全科限时自测（自拟/回忆版）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文背诵/仿写"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周二":{"tasks":[{"block":"am","text":"模拟卷复盘 + 错题归因"},{"block":"pm","text":"限时自测复盘 + 薄弱处回笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇保持手感"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 回归讲义对应专题"},{"block":"pm","text":"笔记滚动背诵（第 3 轮）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文模板打磨"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周四":{"tasks":[{"block":"am","text":"公式/结论默写 + 薄弱点回笔记"},{"block":"pm","text":"框架默写 + 错题回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门保持练习"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本回看 + 考前策略整理"},{"block":"pm","text":"教材重点章快速回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇限时"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或轻量保持训练"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":58,"range":"12.6-12.12","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇 4 套卷①②③ + 错题二刷"},{"block":"pm","text":"薄弱点专攻 + 笔记背诵第三轮"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文背诵/仿写"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周二":{"tasks":[{"block":"am","text":"模拟卷复盘 + 错题归因"},{"block":"pm","text":"限时自测复盘 + 薄弱处回笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇保持手感"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 回归讲义对应专题"},{"block":"pm","text":"笔记滚动背诵（第 3 轮）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文模板打磨"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周四":{"tasks":[{"block":"am","text":"公式/结论默写 + 薄弱点回笔记"},{"block":"pm","text":"框架默写 + 错题回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门保持练习"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本回看 + 考前策略整理"},{"block":"pm","text":"教材重点章快速回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇限时"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或轻量保持训练"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":59,"range":"12.13-12.19","note":"","days":{"周一":{"tasks":[{"block":"am","text":"张宇 4 套卷④ + 李林 6+4 选做 + 公式/结论默写"},{"block":"pm","text":"公式框架全科默写 + 错题回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文背诵/仿写"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周二":{"tasks":[{"block":"am","text":"模拟卷复盘 + 错题归因"},{"block":"pm","text":"限时自测复盘 + 薄弱处回笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇保持手感"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 回归讲义对应专题"},{"block":"pm","text":"笔记滚动背诵（第 3 轮）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文模板打磨"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周四":{"tasks":[{"block":"am","text":"公式/结论默写 + 薄弱点回笔记"},{"block":"pm","text":"框架默写 + 错题回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门保持练习"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本回看 + 考前策略整理"},{"block":"pm","text":"教材重点章快速回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇限时"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或轻量保持训练"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}},{"num":60,"range":"12.20-12.26","note":"12.25-26 上考场（预计）：提前订酒店、踩点、备文具","days":{"周一":{"tasks":[{"block":"am","text":"【考前一周】回归笔记与错题本，2025/2026 真题保持手感（不钻新难题），调整作息"},{"block":"pm","text":"【考前一周】回归笔记、框架默写，保持题感，不钻新题"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文背诵/仿写"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周二":{"tasks":[{"block":"am","text":"模拟卷复盘 + 错题归因"},{"block":"pm","text":"限时自测复盘 + 薄弱处回笔记"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；阅读 1 篇保持手感"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周三":{"tasks":[{"block":"am","text":"错题重做 + 回归讲义对应专题"},{"block":"pm","text":"笔记滚动背诵（第 3 轮）"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文模板打磨"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周四":{"tasks":[{"block":"am","text":"公式/结论默写 + 薄弱点回笔记"},{"block":"pm","text":"框架默写 + 错题回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；小三门保持练习"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周五":{"tasks":[{"block":"am","text":"错题本回看 + 考前策略整理"},{"block":"pm","text":"教材重点章快速回看"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；作文 1 篇限时"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周六":{"tasks":[{"block":"am","text":"机动补漏或轻量保持训练"},{"block":"pm","text":"机动补漏"},{"block":"ev","text":"英语 1.5h：不背单词：复习 + 新词（雷打不动）；周积累小结"},{"block":"ev","text":"政治 2h：肖 4 大题背诵（每天 1 题滚动）+ 时政 + 肖 8 错题回看"}],"note":""},"周日":{"tasks":[{"block":"am","text":"周日不排新课：错题本总览 + 数学公式默写"},{"block":"pm","text":"周日不排新课：832 框架回顾"},{"block":"ev","text":"英语单词 + 本周生词本"}],"note":"上午 09:00 周复盘（第五章模板）+ 10:30 定下周计划；下午机动补漏；晚上休息，单词不断线"}}}]};
+
+const DAYNAMES = ['周一','周二','周三','周四','周五','周六','周日'];
+const BLOCKS = {
+  am: { time: '上午 08:40-12:00', subject: '数学一', cls: 'am' },
+  pm: { time: '下午 13:30-17:00', subject: '832 专业课', cls: 'pm' },
+  ev: { time: '晚上 18:00-21:30', subject: '英语 / 政治', cls: 'ev' }
+};
+const BLOCK_ORDER = ['am','pm','ev'];
+
+/* ---------- date helpers ---------- */
+function parseD(s){ return new Date(s + 'T00:00:00'); }
+const START = parseD(DATA.meta.start);          // W01 Monday 2026-11-02
+const EXAM  = parseD(DATA.meta.exam);
+const W00_START = parseD('2026-10-29');
+function addDays(d,n){ const x = new Date(d.getTime()); x.setDate(x.getDate()+n); return x; }
+function dayDiff(a,b){ return Math.round((a.getTime()-b.getTime())/86400000); }
+function fmtMD(d){ return (d.getMonth()+1) + '.' + String(d.getDate()).padStart(2,'0'); }
+function fmtFull(d){ return d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0'); }
+function wdIdx(d){ return (d.getDay()+6)%7; }   // Mon=0
+function weekStart(n){ return addDays(START,(n-1)*7); }
+function isSameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ---------- daily color: golden-angle hue rotation ---------- */
+function hueOf(d){
+  const idx = Math.round((d.getTime()-START.getTime())/86400000);
+  return ((idx*137.508)%360+360)%360;
+}
+function hueMain(h){ return 'hsl('+h.toFixed(1)+' 64% 44%)'; }
+
+function locate(d){
+  const diff = dayDiff(d, START);
+  if(diff < 0){
+    if(dayDiff(d, W00_START) >= 0) return { kind:'w00' };
+    return { kind:'pre' };
+  }
+  if(diff >= DATA.weeks.length*7) return { kind:'post' };
+  return { kind:'week', week: Math.floor(diff/7)+1, dayIdx: diff%7 };
+}
+
+/* ---------- state ---------- */
+const STORE_KEY = 'p832.check.v1';
+let store = {};
+try{ store = JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {}; }catch(e){ store = {}; }
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){} }
+function isChecked(k){ return !!store[k]; }
+function toggle(k){ if(store[k]) delete store[k]; else store[k] = 1; save(); }
+function tKey(week,dayIdx,i){ return 'w'+week+'d'+dayIdx+'t'+i; }
+function w00Key(i){ return 'w00t'+i; }
+
+function dayTasks(week, dayIdx){
+  const w = DATA.weeks[week-1];
+  const day = w && w.days[DAYNAMES[dayIdx]];
+  return day ? day.tasks : [];
+}
+function dayStats(week, dayIdx){
+  const ts = dayTasks(week, dayIdx);
+  let done = 0;
+  ts.forEach((t,i)=>{ if(isChecked(tKey(week,dayIdx,i))) done++; });
+  return { done, total: ts.length };
+}
+const TOTAL_TASKS = DATA.weeks.reduce((s,w)=>s+Object.values(w.days).reduce((a,d)=>a+d.tasks.length,0),0) + DATA.meta.w00.length;
+function totalDone(){
+  let n = 0;
+  DATA.meta.w00.forEach((t,i)=>{ if(isChecked(w00Key(i))) n++; });
+  DATA.weeks.forEach(w=>{
+    Object.keys(w.days).forEach(dn=>{
+      const idx = DAYNAMES.indexOf(dn);
+      w.days[dn].tasks.forEach((t,i)=>{ if(isChecked(tKey(w.num,idx,i))) n++; });
+    });
+  });
+  return n;
+}
+
+/* ---------- app state ---------- */
+let view = 'today';
+let viewDate = new Date();
+viewDate.setHours(0,0,0,0);
+
+function setViewDate(d){ viewDate = d; render(); }
+
+/* ---------- renderers ---------- */
+function phaseOf(week){
+  return DATA.meta.phases.find(p => week >= p.from && week <= p.to) || DATA.meta.phases[DATA.meta.phases.length-1];
+}
+
+function taskRow(key, text, small){
+  const done = isChecked(key);
+  return '<div class="'+(small?'wg-task':'task')+(done?' done':'')+'" data-key="'+key+'" role="checkbox" aria-checked="'+done+'" tabindex="0">'+
+    '<button class="cbx" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7.5"/></svg></button>'+
+    '<span class="tt">'+esc(text)+'</span></div>';
+}
+
+function weekStrip(week, dayIdx, base){
+  return '<div class="weekstrip">' + DAYNAMES.map((dn,i)=>{
+    const d = addDays(weekStart(week), i);
+    const st = dayStats(week, i);
+    const cls = st.total>0 && st.done===st.total ? 'full' : (st.done>0 ? 'part' : '');
+    const isToday = isSameDay(d, new Date());
+    return '<button class="ws-day '+cls+(isToday?' today':'')+'" style="--acc:'+hueMain(hueOf(d))+'" data-jump="'+fmtFull(d)+'">'+
+      '<div class="wd">'+dn+'</div><div class="dn">'+fmtMD(d)+'</div><span class="ws-dot"></span></button>';
+  }).join('') + '</div>';
+}
+
+function renderToday(){
+  const d = viewDate;
+  const loc = locate(d);
+  const root = document.getElementById('viewRoot');
+
+  if(loc.kind === 'pre'){
+    root.innerHTML = '<div class="empty"><span class="big">还没开跑</span>计划 2026.11.02（周一）正式启动。<br>启动周 10.29-11.1 的准备清单在「里程碑」页。'+
+      '<div style="margin-top:22px"><button class="btn" data-jump="2026-11-02">跳到第一天</button></div></div>';
+    return;
+  }
+  if(loc.kind === 'post'){
+    root.innerHTML = '<div class="empty"><span class="big">初试已结束</span>410，等你的好消息。</div>';
+    return;
+  }
+
+  let html = '<div class="day-head"><div class="day-date"><span class="yr">'+d.getFullYear()+'</span>'+
+    String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0')+'</div>'+
+    '<div class="day-wd">'+DAYNAMES[wdIdx(d)]+'</div>';
+
+  if(loc.kind === 'week'){
+    const ph = phaseOf(loc.week);
+    html += '<div class="chip">'+ph.name+' · W'+String(loc.week).padStart(2,'0')+'</div>';
+    html += '<div class="chip ghost">'+(wdIdx(d)+1)+' / 7</div>';
+  }else{
+    html += '<div class="chip">启动周 W00</div>';
+  }
+  html += '</div>';
+
+  html += '<div class="datenav">'+
+    '<button class="nav-arrow" id="prevDay">‹</button>'+
+    '<span class="nav-label">'+fmtFull(addDays(d,-1))+' — '+fmtFull(addDays(d,1))+'</span>'+
+    '<button class="nav-arrow" id="nextDay">›</button>'+
+    '<button class="btn" data-jump="'+fmtFull(new Date())+'">今天</button>'+
+    '</div>';
+
+  if(loc.kind === 'week'){
+    const w = DATA.weeks[loc.week-1];
+    html += weekStrip(loc.week, loc.dayIdx);
+    if(w.note){
+      html += '<div class="banner"><span class="lb">本周备注</span>'+esc(w.note)+'</div>';
+    }
+    const day = w.days[DAYNAMES[loc.dayIdx]] || {tasks:[],note:''};
+    let delay = 0;
+    BLOCK_ORDER.forEach(bk=>{
+      const items = day.tasks.map((t,i)=>({t,i})).filter(x=>x.t.block===bk);
+      if(!items.length) return;
+      const b = BLOCKS[bk];
+      const doneN = items.filter(x=>isChecked(tKey(loc.week,loc.dayIdx,x.i))).length;
+      html += '<section class="block" style="animation-delay:'+(delay*70)+'ms">'+
+        '<div class="block-head"><span class="block-time">'+b.time+'</span>'+
+        '<span class="block-sub">'+b.subject+'</span>'+
+        '<span class="block-count">'+doneN+' / '+items.length+'</span></div>'+
+        items.map(x=>taskRow(tKey(loc.week,loc.dayIdx,x.i), x.t.text)).join('')+
+        '</section>';
+      delay++;
+    });
+    if(!day.tasks.length){
+      html += '<div class="empty"><span class="big">今天没有排课</span>机动日：补漏 + 休息。</div>';
+    }
+    if(day.note){
+      html += '<div class="day-note"><span class="lb">备注 / 复盘</span>'+esc(day.note)+'</div>';
+    }
+  }else{
+    // W00
+    html += '<div class="banner"><span class="lb">启动周 10.29 - 11.1</span>开跑前的准备，做完一项勾一项。</div>';
+    html += '<section class="block w00-list"><div class="block-head"><span class="block-time">准备清单</span>'+
+      '<span class="block-sub">W00</span></div>'+
+      DATA.meta.w00.map((t,i)=>taskRow(w00Key(i), t)).join('')+'</section>';
+  }
+  root.innerHTML = html;
+
+  const prev = document.getElementById('prevDay');
+  const next = document.getElementById('nextDay');
+  if(prev) prev.addEventListener('click', ()=>setViewDate(addDays(viewDate,-1)));
+  if(next) next.addEventListener('click', ()=>setViewDate(addDays(viewDate,1)));
+}
+
+function renderWeek(){
+  const d = viewDate;
+  const loc = locate(d);
+  const root = document.getElementById('viewRoot');
+  if(loc.kind !== 'week'){
+    root.innerHTML = '<div class="empty"><span class="big">'+(loc.kind==='w00'?'启动周':'未排期')+'</span>'+
+      (loc.kind==='w00'?'在「今日」视图查看准备清单。':'本周视图从 2026.11.02 开始。')+'</div>';
+    return;
+  }
+  const w = DATA.weeks[loc.week-1];
+  const ws = weekStart(loc.week);
+  let html = '<div class="day-head"><div class="day-date"><span class="yr">W'+String(loc.week).padStart(2,'0')+'</span>'+
+    fmtMD(ws)+' — '+fmtMD(addDays(ws,6))+'</div>'+
+    '<div class="chip">'+phaseOf(loc.week).name+'</div></div>';
+  html += '<div class="datenav">'+
+    '<button class="nav-arrow" id="prevDay">‹</button>'+
+    '<span class="nav-label">第 '+loc.week+' 周 / 共 60 周</span>'+
+    '<button class="nav-arrow" id="nextDay">›</button>'+
+    '<button class="btn" data-jump="'+fmtFull(new Date())+'">今天</button>'+
+    '</div>';
+  if(w.note) html += '<div class="banner"><span class="lb">本周备注</span>'+esc(w.note)+'</div>';
+
+  html += '<div class="weekgrid">' + DAYNAMES.map((dn,i)=>{
+    const day = w.days[dn] || {tasks:[],note:''};
+    const dd = addDays(ws,i);
+    const isToday = isSameDay(dd,new Date());
+    return '<div class="wg-day" style="animation-delay:'+(i*60)+'ms;--acc:'+hueMain(hueOf(dd))+'">'+
+      '<div class="wg-head'+(isToday?' today':'')+'"><span class="dn">'+dn+'</span><span class="dt">'+fmtMD(dd)+'</span></div>'+
+      (day.tasks.length
+        ? day.tasks.map((t,j)=>{
+            const done = isChecked(tKey(loc.week,i,j));
+            return '<div class="wg-task'+(done?' done':'')+'" data-key="'+tKey(loc.week,i,j)+'" role="checkbox" aria-checked="'+done+'" tabindex="0">'+
+              '<button class="cbx" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7.5"/></svg></button>'+
+              '<span><span class="blk">'+BLOCKS[t.block].subject+'</span><span class="tt">'+esc(t.text)+'</span></span></div>';
+          }).join('')
+        : '<div class="tiny">—</div>')+
+      '</div>';
+  }).join('') + '</div>';
+
+  root.innerHTML = html;
+  document.getElementById('prevDay').addEventListener('click', ()=>setViewDate(addDays(viewDate,-7)));
+  document.getElementById('nextDay').addEventListener('click', ()=>setViewDate(addDays(viewDate,7)));
+}
+
+function renderAll(){
+  const loc = locate(new Date());
+  const curWeek = loc.kind==='week' ? loc.week : (loc.kind==='w00' ? 1 : 0);
+  let html = '';
+  DATA.meta.phases.forEach(p=>{
+    html += '<div class="phase-head"><span class="phase-name">'+p.name+'</span>'+
+      '<span class="phase-range">'+p.range+' · W'+String(p.from).padStart(2,'0')+'-W'+String(p.to).padStart(2,'0')+'</span></div>'+
+      '<div class="phase-goal">'+esc(p.goal)+'</div>';
+    for(let n=p.from; n<=p.to; n++){
+      const w = DATA.weeks[n-1];
+      if(!w) continue;
+      const ws = weekStart(n);
+      let done=0,total=0;
+      DAYNAMES.forEach((dn,i)=>{
+        const st = dayStats(n,i);
+        done+=st.done; total+=st.total;
+      });
+      const pct = total? Math.round(done/total*100):0;
+      html += '<div class="wk-row'+(n===curWeek?' cur':'')+'" style="--acc:'+hueMain(hueOf(ws))+'" data-week="'+n+'">'+
+        '<span class="wk-no">W'+String(n).padStart(2,'0')+'</span>'+
+        '<span class="wk-rg">'+fmtMD(ws)+' — '+fmtMD(addDays(ws,6))+'</span>'+
+        '<span class="wk-bar"><i style="width:'+pct+'%"></i></span>'+
+        '<span class="wk-pct">'+pct+'%</span></div>';
+    }
+  });
+  document.getElementById('viewRoot').innerHTML = html;
+}
+
+function renderMilestones(){
+  let html = '<div class="day-head"><div class="day-date">里程碑 & 检验点</div></div>';
+  html += '<div class="ms-list">' + DATA.meta.milestones.map(m=>{
+    return '<div class="ms-row"><span class="ms-when">'+esc(m[0])+'</span>'+
+      '<span class="ms-what">'+esc(m[1]||'')+'</span>'+
+      '<span class="ms-goal">'+esc(m[2]||'')+'</span></div>';
+  }).join('') + '</div>';
+  html += '<div class="phase-head" style="margin-top:34px"><span class="phase-name">启动周 W00</span>'+
+    '<span class="phase-range">2026.10.29 - 11.01</span></div>'+
+    '<section class="block w00-list">'+DATA.meta.w00.map((t,i)=>taskRow(w00Key(i), t)).join('')+'</section>';
+  document.getElementById('viewRoot').innerHTML = html;
+}
+
+/* ---------- sidebar ---------- */
+function renderSide(){
+  const done = totalDone();
+  const pct = TOTAL_TASKS ? done/TOTAL_TASKS : 0;
+  const C = 2*Math.PI*43;
+  document.getElementById('ringFg').setAttribute('stroke-dashoffset', String(C*(1-pct)));
+  document.getElementById('ringNum').textContent = Math.round(pct*100) + '%';
+  document.getElementById('ringCnt').textContent = done + ' / ' + TOTAL_TASKS + ' 任务';
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const cd = dayDiff(EXAM, today);
+  document.getElementById('cdNum').textContent = cd > 0 ? cd : '0';
+
+  const loc = locate(today);
+  const ph = loc.kind==='week' ? phaseOf(loc.week) : (loc.kind==='w00' ? DATA.meta.phases[0] : null);
+  if(ph){
+    document.getElementById('phaseName').textContent = ph.name;
+    document.getElementById('phaseRange').textContent = ph.range;
+    document.getElementById('phaseGoal').textContent = ph.goal;
+  }else{
+    document.getElementById('phaseName').textContent = '未开始 / 已结束';
+    document.getElementById('phaseRange').textContent = '';
+    document.getElementById('phaseGoal').textContent = '';
+  }
+}
+
+/* ---------- main render ---------- */
+function render(){
+  document.documentElement.style.setProperty('--acc', hueMain(hueOf(viewDate)));
+  if(view==='today') renderToday();
+  else if(view==='week') renderWeek();
+  else if(view==='all') renderAll();
+  else renderMilestones();
+  renderSide();
+}
+
+/* ---------- events ---------- */
+document.getElementById('tabs').addEventListener('click', e=>{
+  const t = e.target.closest('.tab');
+  if(!t) return;
+  view = t.dataset.view;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on', x===t));
+  render();
+});
+
+document.body.addEventListener('click', e=>{
+  const jump = e.target.closest('[data-jump]');
+  if(jump){
+    const parts = jump.dataset.jump.split('-');
+    setViewDate(new Date(+parts[0], +parts[1]-1, +parts[2]));
+    return;
+  }
+  const wk = e.target.closest('[data-week]');
+  if(wk){
+    setViewDate(weekStart(+wk.dataset.week));
+    view = 'week';
+    document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on', x.dataset.view==='week'));
+    render();
+    return;
+  }
+  const task = e.target.closest('.task,.wg-task');
+  if(task && task.dataset.key){
+    toggle(task.dataset.key);
+    const done = isChecked(task.dataset.key);
+    task.classList.toggle('done', done);
+    task.setAttribute('aria-checked', String(done));
+    renderSide();
+    if(view==='today'){
+      const loc = locate(viewDate);
+      if(loc.kind==='week'){
+        const strips = document.querySelector('.weekstrip');
+        if(strips){ strips.outerHTML = weekStrip(loc.week, loc.dayIdx); }
+        document.querySelectorAll('.block').forEach(sec=>{
+          const rows = sec.querySelectorAll('.task');
+          const cnt = sec.querySelector('.block-count');
+          if(cnt && rows.length){
+            let dn = 0;
+            rows.forEach(r=>{ if(r.classList.contains('done')) dn++; });
+            cnt.textContent = dn + ' / ' + rows.length;
+          }
+        });
+      }
+    }
+    return;
+  }
+});
+
+document.body.addEventListener('keydown', e=>{
+  if(e.key===' ' || e.key==='Enter'){
+    const task = e.target.closest && e.target.closest('.task,.wg-task');
+    if(task && task.dataset.key){
+      e.preventDefault();
+      task.click();
+    }
+  }
+});
+
+document.getElementById('btnToday').addEventListener('click', ()=>{
+  setViewDate(new Date());
+  if(view==='all'||view==='ms'){ view='today';
+    document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on', x.dataset.view==='today'));
+    render();
+  }
+});
+
+document.getElementById('btnExport').addEventListener('click', ()=>{
+  const payload = JSON.stringify({ app:'p832-check', v:1, exported:new Date().toISOString(), store }, null, 2);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([payload], {type:'application/json'}));
+  a.download = '832-plan-progress.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('btnImport').addEventListener('click', ()=>{
+  document.getElementById('fileInput').click();
+});
+document.getElementById('fileInput').addEventListener('change', e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const obj = JSON.parse(r.result);
+      store = Object.assign({}, store, obj.store || {});
+      save(); render();
+      alert('导入完成。');
+    }catch(err){ alert('文件解析失败。'); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+});
+
+document.getElementById('btnReset').addEventListener('click', ()=>{
+  if(confirm('确定清空全部打卡记录？建议先导出备份。')){
+    store = {}; save(); render();
+  }
+});
+
+render();
+/*APP-END*/
+</script>
+</body>
+</html>
