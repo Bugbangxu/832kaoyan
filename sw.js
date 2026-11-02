@@ -1,6 +1,6 @@
 /* sw.js —— 832 上岸计划 PWA service worker
    app-shell 离线缓存：网络优先（更新即时生效），断网回退缓存。 */
-const CACHE = "plan832-v1";
+const CACHE = "plan832-v2";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
